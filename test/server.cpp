@@ -1,17 +1,28 @@
-#include <Arduino.h>
+/**
+ * @file server.cpp
+ * @author chat-GPT
+ * @brief test for using NRF-24 as MESH
+ * @version 0.1
+ * @date 2024-11-28
+ * 
+ * @copyright Copyright Nilusink (c) 2024
+ * 
+ */
 #include <RF24.h>
 #include <RF24Network.h>
 #include <RF24Mesh.h>
 
-RF24 radio(9, 10);      // CE, CSN pins
+RF24 radio(9, 10);      // CE, CSN pins  (9, 10)
 RF24Network network(radio);
 RF24Mesh mesh(radio, network);
+
 
 void setup() {
     Serial.begin(115200);
     mesh.setNodeID(0);  // Master node ID is always 0
     mesh.begin();
 }
+
 
 void loop() {
     mesh.update();
