@@ -15,6 +15,10 @@
 #include "RF24Mesh.h"
 #include <SPI.h>
 
+#include "drivers/fan.hpp"
+#include "drivers/utils.hpp"
+
+
 /***** Configure the chosen CE,CS pins *****/
 RF24 radio(9, 10);
 RF24Network network(radio);
@@ -28,8 +32,10 @@ struct payload_t {
 uint32_t ctr = 0;
 
 
-
 void setup() {
+  // fan setup
+  fan::setup();
+
   Serial.begin(9600);
   while (!Serial) {
     // some boards need this because of native USB capability

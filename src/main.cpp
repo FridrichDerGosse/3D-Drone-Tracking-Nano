@@ -1,121 +1,114 @@
-/**
- * @file client.cpp
- * @author nRF24
- * @brief test for using NRF-24 as MESH
- * @version 0.1
- * @date 2024-11-28
- * 
- * @copyright Copyright Nilusink (c) 2024
- * 
- */
-/** RF24Mesh_Example.ino by TMRh20
-
-   This example sketch shows how to manually configure a node via RF24Mesh, and send data to the
-   master node.
-   The nodes will refresh their network address as soon as a single write fails. This allows the
-   nodes to change position in relation to each other and the master node.
-*/
+/** Modification of RF24Mesh_Example_Master.ino by TMRh20 and RF24Mesh_Example_Master_Statics by TMRh20
 
 
-#include "RF24.h"
+   This example sketch shows how to send data to nodes bassed on their ID.
+
+   The nodes can change physical or logical position in the network, and reconnect through different
+   routing nodes as required. The master node manages the address assignments for the individual nodes
+   in a manner similar to DHCP.
+
+ **/
+
+
 #include "RF24Network.h"
+#include "RF24.h"
 #include "RF24Mesh.h"
 #include <SPI.h>
-//#include <printf.h>
+
+#include "drivers/fan.hpp"
+#include "drivers/utils.hpp"
 
 
-/**** Configure the nrf24l01 CE and CS pins ****/
+/***** Configure the chosen CE,CS pins *****/
 RF24 radio(9, 10);
 RF24Network network(radio);
 RF24Mesh mesh(radio, network);
-
-/*
- * User Configuration: nodeID - A unique identifier for each radio. Allows addressing
- * to change dynamically with physical changes to the mesh.
- *
- * In this example, configuration takes place below, prior to uploading the sketch to the device
- * A unique value from 1-255 must be configured for each node.
- */
-#define nodeID 1
-
-
-uint32_t displayTimer = 0;
 
 struct payload_t {
   unsigned long ms;
   unsigned long counter;
 };
 
+uint32_t ctr = 0;
+
+
 void setup() {
+  // fan setup
+  fan::setup();
 
   Serial.begin(9600);
   while (!Serial) {
     // some boards need this because of native USB capability
   }
 
-  // Set the nodeID manually
-  mesh.setNodeID(nodeID);
+  // Set the nodeID to 0 for the master node
+  mesh.setNodeID(0);
 
-  // Set the PA Level to MIN and disable LNA for testing & power supply related issues
+  Serial.println("setting power level");
+
   radio.begin();
   radio.setPALevel(RF24_PA_MAX, 0);
 
+  Serial.println("power level set");
+
+  Serial.println(mesh.getNodeID());
   // Connect to the mesh
-  Serial.println(F("Connecting to the mesh..."));
   if (!mesh.begin()) {
-    if (radio.isChipConnected()) {
-      do {
-        // mesh.renewAddress() will return MESH_DEFAULT_ADDRESS on failure to connect
-        Serial.println(F("Could not connect to network.\nConnecting to the mesh..."));
-      } while (mesh.renewAddress() == MESH_DEFAULT_ADDRESS);
-    } else {
-      Serial.println(F("Radio hardware not responding."));
-      while (1) {
-        // hold in an infinite loop
-      }
+    // if mesh.begin() returns false for a master node, then radio.begin() returned false.
+    Serial.println(F("Radio hardware not responding."));
+    while (1) {
+      // hold in an infinite loop
     }
   }
   Serial.println("setup done");
 }
 
-
+uint32_t displayTimer = 0;
 
 void loop() {
 
+  // Call mesh.update to keep the network updated
   mesh.update();
 
-  // Send to the master node every second
-  if (millis() - displayTimer >= 1000) {
-    displayTimer = millis();
+  // In addition, keep the 'DHCP service' running on the master node so addresses will
+  // be assigned to the sensor nodes
+  mesh.DHCP();
 
-    // Send an 'M' type message containing the current millis()
-    if (!mesh.write(&displayTimer, 'M', sizeof(displayTimer))) {
 
-      // If a write fails, check connectivity to the mesh network
-      if (!mesh.checkConnection()) {
-        //refresh the network address
-        Serial.println("Renewing Address");
-        if (mesh.renewAddress() == MESH_DEFAULT_ADDRESS) {
-          //If address renewal fails, reconfigure the radio and restart the mesh
-          //This allows recovery from most if not all radio errors
-          mesh.begin();
-        }
-      } else {
-        Serial.println("Send fail, Test OK");
-      }
-    } else {
-      Serial.print("Send OK: ");
-      Serial.println(displayTimer);
+  // Check for incoming data from the sensors
+  if (network.available()) {
+    RF24NetworkHeader header;
+    network.peek(header);
+    Serial.print("Got ");
+    uint32_t dat = 0;
+    switch (header.type) {
+      // Display the incoming millis() values from the sensor nodes
+      case 'M':
+        network.read(header, &dat, sizeof(dat));
+        Serial.print(dat);
+        Serial.print(" from RF24Network address 0");
+        Serial.println(header.from_node, OCT);
+        break;
+      default:
+        network.read(header, 0, 0);
+        Serial.println(header.type);
+        break;
     }
   }
 
-  while (network.available()) {
-    RF24NetworkHeader header;
-    payload_t payload;
-    network.read(header, &payload, sizeof(payload));
-    Serial.print("Received packet #");
-    Serial.print(payload.counter);
-    Serial.print(" at ");
-    Serial.println(payload.ms);
+
+  // Send each node a message every five seconds
+  // Send a different message to node 1, containing another counter instead of millis()
+  if (millis() - displayTimer > 5000) {
+    ctr++;
+    for (int i = 0; i < mesh.addrListTop; i++) {
+      payload_t payload = { millis(), ctr };
+      if (mesh.addrList[i].nodeID == 1) {  //Searching for node one from address list
+        payload = { ctr % 3, ctr };
+      }
+      RF24NetworkHeader header(mesh.addrList[i].address, OCT);                                                //Constructing a header
+      Serial.println(network.write(header, &payload, sizeof(payload)) == 1 ? F("Send OK") : F("Send Fail"));  //Sending an message
+    }
+    displayTimer = millis();
   }
 }
