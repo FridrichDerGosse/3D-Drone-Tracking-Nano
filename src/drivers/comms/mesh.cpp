@@ -78,7 +78,7 @@ void Client::update()
 bool Client::send(payload_t payload, bool renew, uint8_t target)
 {
     // Send an 'M' type message containing the current millis()
-    if (!mesh->write(&payload, 'M', sizeof(payload))) {
+    if (!mesh->write(&payload, 'M', sizeof(payload), target)) {
 
       // If a write fails, check connectivity to the mesh network
       if (!mesh->checkConnection()) {

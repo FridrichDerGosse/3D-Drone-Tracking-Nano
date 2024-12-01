@@ -37,6 +37,10 @@ namespace mesh
         public:
             Client(RF24 *radio, RF24Network *network, RF24Mesh *mesh, uint8_t node_id);
 
+            /**
+             * @brief initial setup of the mesh
+             * 
+             */
             void init();
 
             /**
@@ -48,7 +52,21 @@ namespace mesh
              */
             bool connect(uint8_t retries = 10);
 
+            /**
+             * @brief updates mesh, dhcp and reads incomming messages
+             * 
+             */
             void update();
+
+            /**
+             * @brief send a message
+             * 
+             * @param payload message to send
+             * @param renew renew on check connection fail?
+             * @param target target node id
+             * @return true send successful
+             * @return false send fail
+             */
             bool send(payload_t payload, bool renew = true, uint8_t target = 0);
     };
 }
