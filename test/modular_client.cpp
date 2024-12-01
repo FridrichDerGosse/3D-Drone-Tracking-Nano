@@ -4,17 +4,20 @@
  */
 #include "drivers/comms/mesh.hpp"
 
-mesh::Client client(9, 10, 1);
+RF24 r(9, 10);
+RF24Network n(r);
+RF24Mesh m(r, n);
+mesh::Client client(&r, &n, &m, 1);
 
 void setup()
 {
     Serial.begin(9600);
-    Serial.println("initializing");
+    while (!Serial);
 
+    Serial.println("initializing");
     client.init();
 
     Serial.println("trying to connect");
-    
     if (!client.connect())
     {
         Serial.println("nRF-24 hardware error!");
@@ -22,20 +25,34 @@ void setup()
         for (;;);
     }
 
-    Serial.println("init done");
+    Serial.println("setup done");
 }
 
 
-uint16_t n = 0;
+uint16_t counter = 0;
 uint32_t displayTimer = 0;
 void loop()
 {
-    // client.update();
+    client.update();
 
-    // if (millis() - displayTimer >= 1000)
-    // {
-    //     displayTimer = millis();
+    if (millis() - displayTimer >= 100)
+    {
+        displayTimer = millis();
 
-    //     client.send({displayTimer, n});
-    // }
+        uint8_t fails = 0;
+        while (!client.send({displayTimer, counter}, false))
+        {
+            Serial.println("failed");
+            fails++;
+
+            if (fails > 10)
+            {
+                Serial.println("trying to send with renew");
+                delay(10);
+                client.send({displayTimer, counter}, true);
+                break;
+            }
+        }
+        counter++;
+    }
 }

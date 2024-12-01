@@ -30,12 +30,12 @@ namespace mesh
     {
         private:
             const uint8_t node_id;
-            RF24 radio;
-            RF24Network network;
-            RF24Mesh mesh;
+            RF24 *radio;
+            RF24Network *network;
+            RF24Mesh *mesh;
 
         public:
-            Client(pin_t ce_pin, pin_t cs_pin, uint8_t node_id);
+            Client(RF24 *radio, RF24Network *network, RF24Mesh *mesh, uint8_t node_id);
 
             void init();
 
@@ -49,6 +49,6 @@ namespace mesh
             bool connect(uint8_t retries = 10);
 
             void update();
-            bool send(payload_t payload, uint8_t target = 0);
+            bool send(payload_t payload, bool renew = true, uint8_t target = 0);
     };
 }
