@@ -29,8 +29,8 @@ void setup()
     }
 
     Serial.println("setup done");
-	mesh::payload_t initial_message = "{\"type\": 11}";
-	Serial.println(client.send(initial_message));
+
+    delay(100);
 }
 
 
@@ -40,9 +40,13 @@ void loop()
 {
     client.update();
 
-    // if (millis() - displayTimer >= 100)
+    if (millis() - displayTimer >= 500)
+    {
+        displayTimer = millis();
+        mesh::payload_t initial_message = "{\"type\": 11}";
+	    Serial.println(client.send(initial_message));
+    }
     // {
-    //     displayTimer = millis();
 
     //     uint8_t fails = 0;
     //     while (!client.send({displayTimer, counter}, false))
