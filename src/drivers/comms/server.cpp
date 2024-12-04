@@ -7,21 +7,29 @@ using namespace mesh;
 // mesh master
 Server::Server(RF24 *radio, RF24Network *network, RF24Mesh *mesh)
 	: radio(radio), network(network), mesh(mesh)
-{
-}
+{}
 
 void Server::init()
 {
+	if (debugging)
+		Serial.println("initializing");
+
 	// set to master
 	mesh->setNodeID(0);
 
 	// set emmision strengh
 	radio->begin();
 	radio->setPALevel(RF24_PA_MAX, 0);
+
+	if (debugging)
+		Serial.println("set power level");
 }
 
 bool Server::start()
 {
+	if (debugging)
+		Serial.println("starting");
+
 	if (!mesh->begin())
 	{
 		// if mesh.begin() returns false for a master node, then radio.begin() returned false.
@@ -30,6 +38,9 @@ bool Server::start()
 
 		return false;
 	}
+	if (debugging)
+		Serial.println("server started");
+
 	return true;
 }
 
@@ -49,26 +60,31 @@ void Server::update()
 		network->peek(header);
 
 		if (debugging)
-			Serial.print("Got ");
+			Serial.println("Got ");
 
 		payload_t payload;
 		switch (header.type)
 		{
 		// Display the incoming millis() values from the sensor nodes
 		case 'M':
-			network->read(header, &payload, sizeof(payload));
+			network->read(header, &payload, payload_size);
 
 			if (debugging)
 			{
-				Serial.print(payload.id);
-				Serial.print(", data: ");
-				Serial.print(payload.data);
-				Serial.print(" from RF24Network address 0");
+				Serial.print(header.id);
+				Serial.print(", data: \"");
+				Serial.print(payload);
+				Serial.print("\" from RF24Network address 0");
 				Serial.println(header.from_node, OCT);
 			}
 
 			// append to queue
-			receive_buffer->add_message(payload.data);
+			// if (!message_written)
+			// {
+			// 	message_written = true;
+			// 	strncpy(last_message, payload.data, 64);
+			// }
+			receive_buffer.add_message(payload);
 
 			break;
 
@@ -86,7 +102,7 @@ void Server::update()
 bool Server::send(payload_t payload, uint8_t target)
 {
 	RF24NetworkHeader header(mesh->getAddress(target), OCT);
-	if (!network->write(header, &payload, sizeof(payload)))
+	if (!network->write(header, &payload, payload_size))
 	{
 		if (debugging)
 			Serial.println("send fail");
@@ -98,7 +114,8 @@ bool Server::send(payload_t payload, uint8_t target)
 
 bool Server::available()
 {
-	return receive_buffer->available();
+	// return message_written;
+	return receive_buffer.available();
 }
 
 bool Server::get_received_message(char *buffer)
@@ -107,7 +124,8 @@ bool Server::get_received_message(char *buffer)
 		return false;
 	
 	// copy buffer content
-	receive_buffer->read(buffer);
+	// strncpy(buffer, last_message, 64);
+	receive_buffer.read(buffer);
 
 	return true;
 }

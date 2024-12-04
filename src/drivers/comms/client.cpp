@@ -62,12 +62,11 @@ void Client::update()
 		{
 		// Display the incoming millis() values from the sensor nodes
 		case 'M':
-			network->read(header, &payload, sizeof(payload));
+			network->read(header, &payload, payload_size);
 			if (debugging)
 			{
-				Serial.print(payload.id);
-				Serial.print(", data: ");
-				Serial.print(payload.data);
+				Serial.print("data: ");
+				Serial.print(payload);
 				Serial.print(" from RF24Network address 0");
 				Serial.println(header.from_node, OCT);
 			}
@@ -88,11 +87,11 @@ bool Client::send(payload_t payload, bool renew, uint8_t target)
 {
 	if (debugging)
 	{
-		Serial.print("sending payload: "); Serial.println(payload.data);
+		Serial.print("sending payload: "); Serial.println(payload);
 	}
 
 	// Send an 'M' type message containing the current millis()
-	if (!mesh->write(&payload, 'M', sizeof(payload), target))
+	if (!mesh->write(&payload, 'M', payload_size, target))
 	{
 
 		// If a write fails, check connectivity to the mesh network

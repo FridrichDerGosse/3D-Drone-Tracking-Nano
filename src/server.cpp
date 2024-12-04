@@ -83,9 +83,8 @@ void loop()
 				json_reply["type"] = 0;  // ack
 				
 				// send message to server
-				strncpy(net_message_buffer, obj["data"], 128);
 				mesh::payload_t payload;
-				payload.init(0, net_message_buffer);
+				strncpy(payload, obj["data"], 128);
 				json_reply["ack"] = server.send(payload, obj["to"]);
 
 				break;

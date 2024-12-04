@@ -22,13 +22,6 @@ namespace mesh
 {
     using namespace utils;
 
-    struct payload_t {
-        uint8_t id;
-        char data[STRING_SIZE];
-
-        void init(uint8_t id, char *mes)
-        {
-            strncpy(data, mes, STRING_SIZE);
-        }
-    };
+    using payload_t = char[STRING_SIZE];
+    const uint16_t payload_size = sizeof(char) * STRING_SIZE;
 }
