@@ -10,7 +10,8 @@ void mesh::print_payload(payload_t payload)
         if (b == 0)
             break;
 
-        Serial.print(b);
+        Serial.print((char)b);
+        // Serial.print(",");
     }
 }
 
@@ -19,12 +20,15 @@ void mesh::payload_to_string(payload_t *payload, char *string)
     for (int i = 0; i < STRING_SIZE; i++)
     {
         byte b = payload->data[i];
-        string[i] = b;
+        string[i] = (char)b;
 
         // check for null byte
         if (b == 0)
             break;
     }
+
+    // Serial.print("payload: "); print_payload(*payload); Serial.println("\n");
+    // Serial.print("converted to: "); Serial.println(string);
 }
 
 

@@ -28,9 +28,21 @@ namespace mesh
     } payload_t;
     const uint16_t payload_size = sizeof(byte) * STRING_SIZE;
 
+    /**
+     * @brief prints a payload in a readable format
+     * 
+     */
     void print_payload(payload_t payload);
 
+    /**
+     * @brief converts a payload to string format
+     * 
+     */
     void payload_to_string(payload_t *payload, char *string);
 
+    /**
+     * @brief converts a string to payload format
+     * 
+     */
     void string_to_payload(char *string, payload_t *payload);
 }

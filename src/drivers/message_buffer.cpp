@@ -10,21 +10,24 @@ MessageBuffer::MessageBuffer()
 
 bool MessageBuffer::available()
 {
-    return write_pos - read_pos > 0;
+    return n_elements > 0;
 }
 
 
 bool MessageBuffer::add_message(char* message)
 {
-    Serial.print("adding message: "); Serial.println((unsigned int)message);
+//     Serial.print("adding message: "); Serial.println(message);
     // check for buffer overflow
-    if (write_pos < read_pos)
+    if (n_elements >= BUFFER_SIZE)
+    {
+        Serial.println("buffer overflow");
         return false;
+    }
 
     // copy to buffer
     strncpy(messages[write_pos], message, STRING_SIZE);
     write_pos++;
-
+    n_elements++;
     if (write_pos >= BUFFER_SIZE)
     {
         write_pos = 0;
@@ -43,6 +46,13 @@ bool MessageBuffer::read(char* message)
     
     // copy message to output
     strncpy(message, messages[read_pos], STRING_SIZE);
+
+    read_pos++;
+    n_elements--;
+    if (read_pos >= BUFFER_SIZE)
+    {
+        read_pos = 0;
+    }
 
     return true;
 }

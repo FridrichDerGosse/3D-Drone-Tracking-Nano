@@ -22,7 +22,7 @@ void setup()
 	while (!Serial);
 
 	// mesh server
-	server.debugging = true;
+	server.debugging = false;
 	server.init();
 	server.start();
 }
@@ -34,22 +34,15 @@ JsonDocument json_input;
 JsonDocument json_reply;
 void loop()
 {
-	// // Call mesh.update to keep the network updated
-    // m.update();
-
-    // // In addition, keep the 'DHCP service' running on the master node so addresses will
-    // // be assigned to the sensor nodes
-    // m.DHCP();
-	// mesh updates
 	server.update();
 
-	if (!clients_connected && server.available())
+	while (server.available())
 	{
 		server.get_received_message(net_message_buffer);
 		Serial.print("client message: ");
 		Serial.println(net_message_buffer);
 
-		clients_connected = true;
+		// clients_connected = true;
 	}
 
 	if (!clients_connected)

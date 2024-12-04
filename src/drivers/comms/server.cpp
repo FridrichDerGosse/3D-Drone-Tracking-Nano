@@ -100,7 +100,8 @@ void Server::update()
 
 			if (debugging)
 			{
-				Serial.print("unknown header type: "); Serial.println((char)header.type);
+				Serial.print("unknown header type: "); Serial.print((char)header.type);
+				Serial.print(" ("); Serial.print((uint8_t)header.type); Serial.println(")");
 			}
 
 			break;

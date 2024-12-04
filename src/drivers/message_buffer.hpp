@@ -20,6 +20,7 @@
 class MessageBuffer
 {
     private:
+        uint8_t n_elements = 0;
         uint8_t write_pos;
         uint8_t read_pos;
 
