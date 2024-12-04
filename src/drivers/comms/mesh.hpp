@@ -24,7 +24,12 @@ namespace mesh
 
     struct payload_t {
         uint8_t id;
-        const char *data;
+        char data[STRING_SIZE];
+
+        void init(uint8_t id, char *mes)
+        {
+            strncpy(data, mes, STRING_SIZE);
+        }
     };
 
     class Client
@@ -81,7 +86,9 @@ namespace mesh
             RF24Mesh *mesh;
 
             // MessageBuffer<16, 1024> send_buffer;
-            MessageBuffer *receive_buffer;
+            // bool message_written = false;
+            // char last_message[64];
+            MessageBuffer receive_buffer;
 
         public:
             bool debugging = false;

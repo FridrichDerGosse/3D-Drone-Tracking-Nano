@@ -11,8 +11,9 @@
 #include <Arduino.h>
 
 
-#define BUFFER_SIZE 16
-#define STRING_SIZE 1024
+// very limited ram
+#define BUFFER_SIZE 4
+#define STRING_SIZE 128
 
 
 // template <uint8_t buffer_size, uint16_t string_size>
