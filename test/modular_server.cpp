@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include "drivers/comms/armsom.hpp"
-#include "drivers/comms/server.hpp"
+#include "drivers/comms/mesh.hpp"
 #include "drivers/fan.hpp"
 
 
@@ -28,37 +28,17 @@ void setup()
 }
 
 
-bool clients_connected = false;
-char net_message_buffer[128];
+char net_message_buffer[1024];
 JsonDocument json_input;
 JsonDocument json_reply;
 void loop()
 {
-	// // Call mesh.update to keep the network updated
-    // m.update();
-
-    // // In addition, keep the 'DHCP service' running on the master node so addresses will
-    // // be assigned to the sensor nodes
-    // m.DHCP();
 	// mesh updates
 	server.update();
-
-	if (!clients_connected && server.available())
-	{
-		server.get_received_message(net_message_buffer);
-		Serial.print("client message: ");
-		Serial.println(net_message_buffer);
-
-		clients_connected = true;
-	}
-
-	if (!clients_connected)
-		return;
 
 	// armsom comms
 	if (Serial.available())
 	{
-		Serial.println("SER: available");
 		// turn fan on while receiving
 		fan::full();
 
@@ -83,9 +63,7 @@ void loop()
 				json_reply["type"] = 0;  // ack
 				
 				// send message to server
-				strncpy(net_message_buffer, obj["data"], 128);
-				mesh::payload_t payload;
-				payload.init(0, net_message_buffer);
+				mesh::payload_t payload = {0, obj["data"]};
 				json_reply["ack"] = server.send(payload, obj["to"]);
 
 				break;
