@@ -43,7 +43,8 @@ void loop()
     if (millis() - displayTimer >= 500)
     {
         displayTimer = millis();
-        mesh::payload_t initial_message = "{\"type\": 11}";
+        mesh::payload_t initial_message;
+        mesh::string_to_payload("{\"type\": 11}", &initial_message);
 	    Serial.println(client.send(initial_message));
     }
     // {
