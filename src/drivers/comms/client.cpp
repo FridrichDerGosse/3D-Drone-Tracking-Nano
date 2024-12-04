@@ -61,7 +61,7 @@ void Client::update()
 		switch (header.type)
 		{
 		// Display the incoming millis() values from the sensor nodes
-		case 'M':
+		case 'S':
 			network->read(header, &payload, payload_size);
 			if (debugging)
 			{
@@ -91,7 +91,7 @@ bool Client::send(payload_t payload, bool renew, uint8_t target)
 	}
 
 	// Send an 'M' type message containing the current millis()
-	if (!mesh->write(&payload, 'M', payload_size, target))
+	if (!mesh->write(&payload, 'S', payload_size, target))
 	{
 
 		// If a write fails, check connectivity to the mesh network

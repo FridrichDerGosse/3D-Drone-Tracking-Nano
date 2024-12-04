@@ -29,7 +29,7 @@ void setup()
 
 
 bool clients_connected = false;
-char net_message_buffer[128];
+char net_message_buffer[STRING_SIZE];
 JsonDocument json_input;
 JsonDocument json_reply;
 void loop()
@@ -84,7 +84,7 @@ void loop()
 				
 				// send message to server
 				mesh::payload_t payload;
-				strncpy(payload, obj["data"], 128);
+				strncpy(payload, obj["data"], STRING_SIZE);
 				json_reply["ack"] = server.send(payload, obj["to"]);
 
 				break;

@@ -14,9 +14,9 @@ bool MessageBuffer::available()
 }
 
 
-bool MessageBuffer::add_message(const char* message)
+bool MessageBuffer::add_message(char* message)
 {
-    Serial.print("adding message: "); Serial.print(message);
+    Serial.print("adding message: "); Serial.println((unsigned int)message);
     // check for buffer overflow
     if (write_pos < read_pos)
         return false;

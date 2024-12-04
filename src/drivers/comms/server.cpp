@@ -56,17 +56,20 @@ void Server::update()
 	// Check for incoming data from the sensors
 	if (network->available())
 	{
+		if (debugging)
+			Serial.println("net available");
+
 		RF24NetworkHeader header;
 		network->peek(header);
 
 		if (debugging)
 			Serial.println("Got ");
 
-		payload_t payload;
+		payload_t payload = {0};
 		switch (header.type)
 		{
 		// Display the incoming millis() values from the sensor nodes
-		case 'M':
+		case 'S':
 			network->read(header, &payload, payload_size);
 
 			if (debugging)
@@ -75,7 +78,9 @@ void Server::update()
 				Serial.print(", data: \"");
 				Serial.print(payload);
 				Serial.print("\" from RF24Network address 0");
-				Serial.println(header.from_node, OCT);
+				Serial.print(header.from_node, OCT);
+				Serial.print(", type: ");
+				Serial.println((char)header.type);
 			}
 
 			// append to queue
@@ -92,7 +97,9 @@ void Server::update()
 			network->read(header, 0, 0);
 
 			if (debugging)
-				Serial.println(header.type);
+			{
+				Serial.print("unknown header type: "); Serial.println((char)header.type);
+			}
 
 			break;
 		}
@@ -101,8 +108,8 @@ void Server::update()
 
 bool Server::send(payload_t payload, uint8_t target)
 {
-	RF24NetworkHeader header(mesh->getAddress(target), OCT);
-	if (!network->write(header, &payload, payload_size))
+	// RF24NetworkHeader header(mesh->getAddress(target), OCT);
+	if (!mesh->write(&payload, 'S', payload_size, target))
 	{
 		if (debugging)
 			Serial.println("send fail");

@@ -13,7 +13,7 @@
 
 // very limited ram
 #define BUFFER_SIZE 4
-#define STRING_SIZE 128
+#define STRING_SIZE 64
 
 
 // template <uint8_t buffer_size, uint16_t string_size>
@@ -30,7 +30,7 @@ class MessageBuffer
 
         bool available();
 
-        bool add_message(const char *message);
+        bool add_message(char *message);
 
         bool read(char *message);
 };
