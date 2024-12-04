@@ -11,14 +11,18 @@
 #include <Arduino.h>
 
 
-template <uint8_t buffer_size, uint16_t string_size>
+#define BUFFER_SIZE 16
+#define STRING_SIZE 1024
+
+
+// template <uint8_t buffer_size, uint16_t string_size>
 class MessageBuffer
 {
     private:
         uint8_t write_pos;
         uint8_t read_pos;
 
-        char messages[buffer_size][string_size];
+        char messages[BUFFER_SIZE][STRING_SIZE];
 
     public:
         MessageBuffer();

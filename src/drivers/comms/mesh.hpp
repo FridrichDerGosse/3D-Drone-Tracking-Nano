@@ -81,7 +81,7 @@ namespace mesh
             RF24Mesh *mesh;
 
             // MessageBuffer<16, 1024> send_buffer;
-            MessageBuffer<16, 1024> *receive_buffer;
+            MessageBuffer *receive_buffer;
 
         public:
             bool debugging = false;
