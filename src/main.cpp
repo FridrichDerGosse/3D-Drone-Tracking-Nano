@@ -1,36 +1,36 @@
-/**
- * @brief armsom test
- *
- */
-#include <Wire.h>
 #include <Arduino.h>
-// i2c/wiring proof of concept code - tie two Arduinos together via
-// i2c and do some simple data xfer.
-//
-// slave side code
-//
-// Jason Winningham (kg4wsv)
-// 14 jan 2008
+#include "drivers/comms/armsom.hpp"
+#include "drivers/fan.hpp"
 
-void setup() 
-{ 
-  Wire.begin(2);                // join i2c bus with address #2 
-  Wire.onRequest(requestEvent); // register event 
-  Serial.begin(9600);           // start serial for output 
-} 
 
-void loop() 
-{ 
-  delay(100); 
-} 
-
-// function that executes whenever data is received from master 
-// this function is registered as an event, see setup() 
-void requestEvent() 
+void setup()
 {
-  static char c = '0';
+	// fan setup
+	fan::setup();
+	fan::off();
 
-  Wire.write(c++);
-  if (c > 'z')
-    c = '0';
+	// serial comms
+	Serial.begin(9600);
+}
+
+
+void loop()
+{
+	if (Serial.available())
+	{
+		// turn fan on while receiving
+		fan::full();
+
+		// receive message
+		String buffer;
+		armsom::read_string(&buffer);
+
+		// echo message
+		armsom::write_string(buffer);
+
+		delay(100);
+
+		// turn fan back off
+		fan::off();
+	}
 }
