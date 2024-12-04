@@ -22,23 +22,36 @@ void setup()
 	while (!Serial);
 
 	// mesh server
-	server.debugging = true;
+	server.debugging = false;
 	server.init();
 	server.start();
 }
 
 
-char net_message_buffer[1024];
+bool clients_connected = false;
+char net_message_buffer[STRING_SIZE];
 JsonDocument json_input;
 JsonDocument json_reply;
 void loop()
 {
-	// mesh updates
 	server.update();
+
+	while (server.available())
+	{
+		server.get_received_message(net_message_buffer);
+		Serial.print("client message: ");
+		Serial.println(net_message_buffer);
+
+		// clients_connected = true;
+	}
+
+	if (!clients_connected)
+		return;
 
 	// armsom comms
 	if (Serial.available())
 	{
+		Serial.println("SER: available");
 		// turn fan on while receiving
 		fan::full();
 
@@ -63,7 +76,9 @@ void loop()
 				json_reply["type"] = 0;  // ack
 				
 				// send message to server
-				mesh::payload_t payload = {0, obj["data"]};
+				mesh::payload_t payload;
+                strncpy(net_message_buffer, obj["data"], STRING_SIZE);
+                mesh::string_to_payload(net_message_buffer, &payload);
 				json_reply["ack"] = server.send(payload, obj["to"]);
 
 				break;

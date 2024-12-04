@@ -1,15 +1,24 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include "drivers/comms/armsom.hpp"
-#include "drivers/comms/server.hpp"
+#include "drivers/laser.hpp"
 #include "drivers/fan.hpp"
 
 
-RF24 r(9, 10);
-RF24Network n(r);
-RF24Mesh m(r, n);
-mesh::Server server(&r, &n, &m);
+/**
+ * 
+ * from armsom:
+ * {
+ *      "type": 0=send, 1=get_received, 2=get_laser
+ * }
+ * 
+ * to armsom:
+ * {
+ *      "type": 0=ack, 1=network_data, 2=laser_data
+ * }
+ */
 
+laser::Laser tof(2, 3, 9600);
 
 void setup()
 {
@@ -21,33 +30,32 @@ void setup()
 	Serial.begin(9600);
 	while (!Serial);
 
-	// mesh server
-	server.debugging = false;
-	server.init();
-	server.start();
+    // tof sensor settings
+    Serial.print("setting range: "); Serial.println(tof.set_range(30));
+    Serial.print("setting resolution: "); Serial.println(tof.set_resolution(1));
+
+    // no clue why it doesn't work
+    // for (int i=0; i < 3; i++)
+    // {
+    //     Serial.print("setting laser: "); Serial.println(tof.set_laser(0));
+    //     delay(500);
+    Serial.print("setting laser: "); Serial.println(tof.set_laser(1));
+    //     delay(500);
+    // }
 }
 
 
-bool clients_connected = false;
-char net_message_buffer[STRING_SIZE];
 JsonDocument json_input;
 JsonDocument json_reply;
 void loop()
 {
-	server.update();
+    double distance = tof.measure();
+    char buff[32];
+    snprintf(buff, 31, "distance: %d mm", (int)(distance*1000));
+    Serial.println(buff);
 
-	while (server.available())
-	{
-		server.get_received_message(net_message_buffer);
-		Serial.print("client message: ");
-		Serial.println(net_message_buffer);
-
-		// clients_connected = true;
-	}
-
-	if (!clients_connected)
-		return;
-
+    delay(500);
+    return;
 	// armsom comms
 	if (Serial.available())
 	{
@@ -74,39 +82,20 @@ void loop()
 			case 0: // send
 			{
 				json_reply["type"] = 0;  // ack
-				
-				// send message to server
-				mesh::payload_t payload;
-                strncpy(net_message_buffer, obj["data"], STRING_SIZE);
-                mesh::string_to_payload(net_message_buffer, &payload);
-				json_reply["ack"] = server.send(payload, obj["to"]);
 
 				break;
 			}
 
 			case 1: // get_received
 			{
-				json_reply["type"] = 1;  // data
-
-				if (!server.available())
-				{
-					json_reply["available"] = 0;
-				}
-				else
-				{
-					json_reply["available"] = 1;
-
-					// add data to reply
-					JsonArray data = json_reply["data"].to<JsonArray>();
-
-					// add all received messages
-					while (server.available())
-					{
-						server.get_received_message(net_message_buffer);
-						data.add(net_message_buffer);
-					}
-				}
+				json_reply["type"] = 1;  // messatge data
+                json_reply["available"] = 0;
 			}
+
+            case 2:
+            {
+                json_reply["type"] = 2;  // laser data
+            }
 
 			default:  // unknown message type
 			{
