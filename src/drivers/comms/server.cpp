@@ -76,7 +76,7 @@ void Server::update()
 			{
 				Serial.print(header.id);
 				Serial.print(", data: \"");
-				Serial.print(payload);
+				mesh::print_payload(payload);
 				Serial.print("\" from RF24Network address 0");
 				Serial.print(header.from_node, OCT);
 				Serial.print(", type: ");
@@ -89,7 +89,9 @@ void Server::update()
 			// 	message_written = true;
 			// 	strncpy(last_message, payload.data, 64);
 			// }
-			receive_buffer.add_message(payload);
+			char buffer[STRING_SIZE];
+			mesh::payload_to_string(&payload, buffer);
+			receive_buffer.add_message(buffer);
 
 			break;
 

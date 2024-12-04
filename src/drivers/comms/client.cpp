@@ -66,7 +66,7 @@ void Client::update()
 			if (debugging)
 			{
 				Serial.print("data: ");
-				Serial.print(payload);
+				mesh::print_payload(payload);
 				Serial.print(" from RF24Network address 0");
 				Serial.println(header.from_node, OCT);
 			}
@@ -87,7 +87,7 @@ bool Client::send(payload_t payload, bool renew, uint8_t target)
 {
 	if (debugging)
 	{
-		Serial.print("sending payload: "); Serial.println(payload);
+		Serial.print("sending payload: "); mesh::print_payload(payload);
 	}
 
 	// Send an 'M' type message containing the current millis()

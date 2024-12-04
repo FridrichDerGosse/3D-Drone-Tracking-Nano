@@ -22,6 +22,15 @@ namespace mesh
 {
     using namespace utils;
 
-    using payload_t = char[STRING_SIZE];
-    const uint16_t payload_size = sizeof(char) * STRING_SIZE;
+    // using payload_t = byte[STRING_SIZE];
+    typedef struct {
+        byte data[STRING_SIZE];
+    } payload_t;
+    const uint16_t payload_size = sizeof(byte) * STRING_SIZE;
+
+    void print_payload(payload_t payload);
+
+    void payload_to_string(payload_t *payload, char *string);
+
+    void string_to_payload(char *string, payload_t *payload);
 }
