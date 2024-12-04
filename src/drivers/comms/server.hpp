@@ -7,6 +7,7 @@
  * @copyright Copyright Nilusink (c) 2024
  * 
  */
+#pragma once
 #include "mesh.hpp"
 
 
