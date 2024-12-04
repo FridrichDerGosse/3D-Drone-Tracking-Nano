@@ -15,6 +15,7 @@
 #include <SPI.h>
 
 #include "drivers/utils.hpp"
+#include "drivers/message_buffer.hpp"
 
 
 namespace mesh
@@ -22,8 +23,8 @@ namespace mesh
     using namespace utils;
 
     struct payload_t {
-        unsigned long ms;
-        unsigned long counter;
+        uint8_t id;
+        const char *data;
     };
 
     class Client
@@ -35,6 +36,8 @@ namespace mesh
             RF24Mesh *mesh;
 
         public:
+            bool debugging = false;
+
             Client(RF24 *radio, RF24Network *network, RF24Mesh *mesh, uint8_t node_id);
 
             /**
@@ -68,5 +71,64 @@ namespace mesh
              * @return false send fail
              */
             bool send(payload_t payload, bool renew = true, uint8_t target = 0);
+    };
+
+    class Server
+    {
+        private:
+            RF24 *radio;
+            RF24Network *network;
+            RF24Mesh *mesh;
+
+            // MessageBuffer<16, 1024> send_buffer;
+            MessageBuffer<16, 1024> *receive_buffer;
+
+        public:
+            bool debugging = false;
+
+            Server(RF24 *radio, RF24Network *network, RF24Mesh *mesh);
+
+            /**
+             * @brief initial setup of the mesh
+             * 
+             */
+            void init();
+
+            /**
+             * @brief tries to start the master node
+             * 
+             * @return true sucessfully connected
+             * @return false hardware error
+             */
+            bool start();
+
+            /**
+             * @brief updates mesh, dhcp and reads incomming messages
+             * 
+             */
+            void update();
+
+            /**
+             * @brief send a message
+             * 
+             * @param payload message to send
+             * @param target target node id
+             * @return true send successful
+             * @return false send fail
+             */
+            bool send(payload_t payload, uint8_t target);
+
+            /**
+             * @brief check if the server has received anything
+             * 
+             */
+            bool available();
+
+            /**
+             * @brief get one of the received messages if available
+             * 
+             * @param buffer message destination
+             */
+            bool get_received_message(char *buffer);
     };
 }
