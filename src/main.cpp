@@ -1,112 +1,60 @@
-#include <Arduino.h>
-#include <ArduinoJson.h>
-#include "drivers/comms/armsom.hpp"
+/**
+ * @brief armsom test
+ * 
+ */
 #include "drivers/comms/mesh.hpp"
-#include "drivers/fan.hpp"
-
 
 RF24 r(9, 10);
 RF24Network n(r);
 RF24Mesh m(r, n);
-mesh::Server server(&r, &n, &m);
-
+mesh::Client client(&r, &n, &m, 1);
 
 void setup()
 {
-	// fan setup
-	fan::setup();
-	fan::off();
+    Serial.begin(9600);
+    while (!Serial);
 
-	// serial comms
-	Serial.begin(9600);
-	while (!Serial);
+    Serial.println("initializing");
+    client.init();
+	client.debugging = true;
 
-	// mesh server
-	server.init();
-	server.start();
+    Serial.println("trying to connect");
+    if (!client.connect())
+    {
+        Serial.println("nRF-24 hardware error!");
+
+        for (;;);
+    }
+
+    Serial.println("setup done");
+	Serial.println(client.send({1, "{\"type\": 11}"}));
 }
 
 
-char net_message_buffer[1024];
-JsonDocument json_input;
-JsonDocument json_reply;
+uint16_t counter = 0;
+uint32_t displayTimer = 0;
 void loop()
 {
-	// mesh updates
-	server.update();
+    client.update();
 
-	// armsom comms
-	if (Serial.available())
-	{
-		// turn fan on while receiving
-		fan::full();
+    // if (millis() - displayTimer >= 100)
+    // {
+    //     displayTimer = millis();
 
-		// reset reply message content
-		json_reply.clear();
+    //     uint8_t fails = 0;
+    //     while (!client.send({displayTimer, counter}, false))
+    //     {
+    //         Serial.println("failed");
+    //         fails++;
 
-		// receive message
-		String buffer;
-		armsom::read_string(&buffer);
-
-		// convert message to json
-		deserializeJson(json_input, buffer);
-		// auto json_input = json::parse(buffer);
-
-		JsonObject obj = json_input.as<JsonObject>();
-
-		// handle message
-		switch ((int)obj["type"])
-		{
-			case 0: // send
-			{
-				json_reply["type"] = 0;  // ack
-				
-				// send message to server
-				mesh::payload_t payload = {0, obj["data"]};
-				json_reply["ack"] = server.send(payload, obj["to"]);
-
-				break;
-			}
-
-			case 1: // get_received
-			{
-				json_reply["type"] = 1;  // data
-
-				if (!server.available())
-				{
-					json_reply["available"] = 0;
-				}
-				else
-				{
-					json_reply["available"] = 1;
-
-					// add data to reply
-					JsonArray data = json_reply["data"].to<JsonArray>();
-
-					// add all received messages
-					while (server.available())
-					{
-						server.get_received_message(net_message_buffer);
-						data.add(net_message_buffer);
-					}
-				}
-			}
-
-			default:  // unknown message type
-			{
-				json_reply["type"] = 0; // ack
-				json_reply["ack"] = 0;
-				break;
-			}
-		}
-
-		// reply to message
-		serializeJson(json_reply, buffer);
-		armsom::write_string(buffer);
-
-		// delay(100);
-
-		// turn fan back off
-		fan::off();
-	}
+    //         if (fails > 10)
+    //         {
+    //             Serial.println("trying to send with renew");
+    //             delay(10);
+    //             client.send({displayTimer, counter}, true);
+    //             break;
+    //         }
+    //     }
+    //     counter++;
+    // }
 }

@@ -86,6 +86,11 @@ void Client::update()
 
 bool Client::send(payload_t payload, bool renew, uint8_t target)
 {
+	if (debugging)
+	{
+		Serial.print("sending payload: "); Serial.println(payload.data);
+	}
+
 	// Send an 'M' type message containing the current millis()
 	if (!mesh->write(&payload, 'M', sizeof(payload), target))
 	{
