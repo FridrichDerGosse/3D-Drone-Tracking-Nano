@@ -15,7 +15,9 @@ bool armsom::read_string(String *buffer)
 {
     while (Serial.available())
     {
-        buffer->concat((char)Serial.read());
+        char tmp = (char)Serial.read();
+        // Serial.println(tmp);
+        buffer->concat(tmp);
     }
     return true;
 }

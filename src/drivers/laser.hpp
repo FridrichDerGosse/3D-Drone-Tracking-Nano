@@ -25,7 +25,7 @@ namespace laser
             // float ascii_to_value(char *message)
 
         public:
-            bool debugging = false;
+            bool debugging = true;
 
             Laser(uint8_t rx_pin, uint8_t tx_pin, uint32_t baud);
 
@@ -56,6 +56,11 @@ namespace laser
              */
             bool set_laser(bool state);
 
+            /**
+             * @brief measure distances with the laser
+             * 
+             * @return double distance in m, negative values are fail
+             */
             double measure();
     };
 }
