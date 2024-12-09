@@ -35,9 +35,9 @@ void setup()
 	while (!Serial);
 
     // tof sensor settings
-    tof.set_range(80);
-    tof.set_resolution(1);
-	Serial.println(tof.measure());
+    // tof.set_range(80);
+    // tof.set_resolution(1);
+	// Serial.println(tof.measure());
 
 	// turn laser on {"type": 2}
     // tof.set_laser(1);
@@ -48,11 +48,11 @@ JsonDocument json_input;
 JsonDocument json_reply;
 void loop()
 {
-	for (;;)
-	{
-		Serial.println(tof.measure());
-		delay(500);
-	}
+	// for (;;)
+	// {
+	// 	Serial.println(tof.measure());
+	// 	delay(500);
+	// }
     // double distance = tof.measure();
     // char buff[32];
     // snprintf(buff, 31, "distance: %d mm", (int)(distance*1000));
@@ -61,6 +61,9 @@ void loop()
     // delay(500);
     // return;
 	// armsom comms
+
+	// Serial.println(".");
+
 	if (Serial.available())
 	{
 		// Serial.println("SER: available");

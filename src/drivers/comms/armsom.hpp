@@ -14,5 +14,5 @@ namespace armsom
 {
     bool write_string(String data);
 
-    bool read_string(String *buffer);
+    bool read_string(String *buffer, unsigned int timeout = 50);
 }

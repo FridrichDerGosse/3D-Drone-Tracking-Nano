@@ -5,19 +5,34 @@
 bool armsom::write_string(String data)
 {
     // Serial.print("got: \"");
-    Serial.print(data);
+    Serial.print(data); Serial.print('\0');
     // Serial.println("\"");
     return true;
 }
 
 
-bool armsom::read_string(String *buffer)
+bool armsom::read_string(String *buffer, unsigned int timeout)
 {
-    while (Serial.available())
+    unsigned int current_timeout = 0;
+    while (current_timeout < timeout)
     {
-        char tmp = (char)Serial.read();
-        // Serial.println(tmp);
-        buffer->concat(tmp);
+        if (Serial.available())
+        {
+            current_timeout = 0;
+
+            char tmp = (char)Serial.read();
+
+            if (tmp == '\0')
+                return true;
+
+            buffer->concat(tmp);
+
+            continue;
+        }
+
+        delay(5);
+        current_timeout += 5;
     }
-    return true;
+
+    return false;
 }
