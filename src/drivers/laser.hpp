@@ -20,7 +20,15 @@ namespace laser
 
         protected:
             uint8_t calculate_checksum(char *message, uint8_t length);
-            uint8_t read_sensor(char *buffer);
+
+            /**
+             * @brief reads a sensor string
+             * 
+             * @param buffer write target
+             * @param timeout max time to wait for answer
+             * @return uint8_t length, negative: error
+             */
+            uint8_t read_sensor(char *buffer, int timeout=500);
 
             // float ascii_to_value(char *message)
 

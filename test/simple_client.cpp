@@ -30,35 +30,69 @@ void setup() {
     Serial.println("setup done");
 }
 
-void loop() {
-    char text[32] = "Hello, Master!";
+int cnt = 0;
+char text[32];
+void loop()
+{
+    // send back
+    radio.stopListening();
+    delay(500);  // delay for switching modes
+
+    snprintf(text, 31, "Hello, client %d", cnt++);
     bool success = radio.write(&text, 32);  // Send data
+    //radio.writeBlocking()
+
     if (success) {
         Serial.println("Message sent successfully");
     } else {
         Serial.println("Failed to send message");
     }
 
-    radio.startListening();
+    // radio.startListening();
+    // delay(10);  // delay for switching modes
 
-    delay(10);
+    // Serial.println("waiting for message");
 
-    // wait 100 ms for response
-    int start = millis();
-    while (!radio.available() && (millis() - start < 1000)) {}
+    // while (!radio.available());
+    
+    // radio.read(&text, 32);  // Read received data
+    // Serial.print("Received: ");
+    // Serial.println(text);
 
-    if (radio.available())
-    {
-        radio.read(&text, 32);  // Read received data
-        Serial.print("Received: ");
-        Serial.println(text);
-    } else {
-        Serial.println("failed to receive ack");
-    }
 
-    radio.stopListening();
+    // char text[32];
 
-    delay(1000);
+    // snprintf(text, 31, "Hello master %d", cnt);
+    // text[31] = '\0';
+    // cnt++;
+
+    // bool success = radio.write(&text, 32);  // Send data
+    // if (success) {
+    //     Serial.println("Message sent successfully");
+    // } else {
+    //     Serial.println("Failed to send message");
+    // }
+
+    // radio.startListening();
+
+    // delay(10);
+
+    // // wait 100 ms for response
+    // int start = millis();
+    // while (!radio.available() && (millis() - start < 1000)) {}
+
+    // if (radio.available())
+    // {
+    //     radio.read(&text, 32);  // Read received data
+    //     Serial.print("Received: ");
+    //     Serial.println(text);
+    // } else {
+    //     Serial.println("failed to receive ack");
+    // }
+
+    // radio.stopListening();
+
+    // delay(1000);
 }
 
 

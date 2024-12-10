@@ -78,10 +78,22 @@ uint8_t Laser::calculate_checksum(char *message, uint8_t length)
     return ~sum + 1;
 }
 
-uint8_t Laser::read_sensor(char *buffer)
+uint8_t Laser::read_sensor(char *buffer, int timeout)
 {
     // wait for sensor
-    while (!(sensor_serial.available()>0)) { delay(20); };
+    while (!(sensor_serial.available()>0))
+    {
+        if (timeout <= 0)
+        {
+            if (debugging)
+                Serial.print("failed to read sensor");
+
+            return -1;
+        }
+
+        delay(20);
+        timeout -= 20;
+    };
 
     if (debugging)
         Serial.println("sensor available");
@@ -132,7 +144,8 @@ bool Laser::set_range(uint8_t range)
 
     // wait for sensor reply
     char read_buff[16];
-    read_sensor(read_buff);
+    if (!read_sensor(read_buff))
+        return false;
 
     if (debugging)
         Serial.println(read_buff[1], HEX);
@@ -157,7 +170,8 @@ bool Laser::set_resolution(bool resolution)
 
     // wait for sensor reply
     char read_buff[16];
-    read_sensor(read_buff);
+    if (!read_sensor(read_buff))
+        return false;
 
     // check for success
     return read_buff[1] == 0x04;
@@ -173,15 +187,13 @@ bool Laser::set_laser(bool state)
         (char)state,
         (char)(state ? 0x74 : 0x75)  // don't compute CS for simple stuff
     };
-    // Serial.println((uint8_t)buff[3], HEX);
-    // Serial.println((uint8_t)buff[4], HEX);
-
     // send command to sensor
     sensor_serial.print(buff);
 
     // wait for sensor reply
     char read_buff[16];
-    read_sensor(read_buff);
+    if (!read_sensor(read_buff))
+        return false;
 
     // check for success
     return read_buff[3];
@@ -203,7 +215,10 @@ double Laser::measure()
 
     // wait for sensor reply
     char read_buff[16];
-    uint8_t message_length = read_sensor(read_buff);
+    int message_length = read_sensor(read_buff);
+
+    if (message_length <= 0)
+        return -1;
 
     if(read_buff[3]=='E' && read_buff[4]=='R' && read_buff[5]=='R')
     {

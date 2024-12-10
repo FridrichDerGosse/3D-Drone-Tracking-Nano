@@ -13,6 +13,9 @@ bool armsom::write_string(String data)
 
 bool armsom::read_string(String *buffer, unsigned int timeout)
 {
+    if (debugging)
+        Serial.println("reading data... ");
+
     unsigned int current_timeout = 0;
     while (current_timeout < timeout)
     {
@@ -22,7 +25,12 @@ bool armsom::read_string(String *buffer, unsigned int timeout)
 
             char tmp = (char)Serial.read();
 
-            if (tmp == '\0')
+            if (debugging)
+            {
+                Serial.print("read \""); Serial.print(tmp); Serial.println("\"");
+            }
+
+            if (tmp == '\0' && buffer->length() > 1)
                 return true;
 
             buffer->concat(tmp);
@@ -30,9 +38,14 @@ bool armsom::read_string(String *buffer, unsigned int timeout)
             continue;
         }
 
+        if (debugging)
+        {
+            Serial.print("nothing available, timeout="); Serial.println(current_timeout);
+        }
+
         delay(5);
         current_timeout += 5;
     }
 
-    return false;
+    return buffer->length() > 0;
 }

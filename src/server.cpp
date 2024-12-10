@@ -28,11 +28,17 @@ void setup()
 {
 	// fan setup
 	fan::setup();
+	// fan::off();
+
 	fan::off();
 
 	// serial comms
 	Serial.begin(9600);
 	while (!Serial);
+
+	Serial.flush();
+
+	while (Serial.available()) { Serial.read(); }
 
     // tof sensor settings
     // tof.set_range(80);
@@ -48,34 +54,31 @@ JsonDocument json_input;
 JsonDocument json_reply;
 void loop()
 {
-	// for (;;)
-	// {
-	// 	Serial.println(tof.measure());
-	// 	delay(500);
-	// }
-    // double distance = tof.measure();
-    // char buff[32];
-    // snprintf(buff, 31, "distance: %d mm", (int)(distance*1000));
-    // Serial.println(buff);
+	// String buffer;
+	// json_reply["type"] = 2;
+	// json_reply["ack"] = 0;
+	// json_reply["to"] = 0;
+	// serializeJson(json_reply, buffer);
+	// armsom::write_string(buffer);
+	// Serial.flush();
 
-    // delay(500);
-    // return;
-	// armsom comms
-
-	// Serial.println(".");
-
+	// return;
 	if (Serial.available())
 	{
-		// Serial.println("SER: available");
-		// turn fan on while receiving
-		fan::full();
-
 		// reset reply message content
 		json_reply.clear();
 
 		// receive message
 		String buffer;
 		armsom::read_string(&buffer);
+
+		if (buffer.length() < 1)
+		{
+			if (armsom::debugging)
+				Serial.println("buffer length below 2");
+
+			return;
+		}
 
 		// convert message to json
 		deserializeJson(json_input, buffer);
@@ -106,6 +109,8 @@ void loop()
             {
                 json_reply["type"] = 2;  // laser data
 
+				// measure twice bc idk how but he alwys delayed
+				tof.measure();
 				double sensor_val = tof.measure();
 
 				if (sensor_val > 0)
@@ -120,7 +125,7 @@ void loop()
 				break;
             }
 
-			case 3:  // set laser
+			case 3:  // set stuff
 			{
 				json_reply["type"] = 0;
 
@@ -145,6 +150,17 @@ void loop()
 						break;
 					}
 
+					case 3:
+					{
+						// set fan speed
+						fan::set_speed((uint8_t)obj["value"]);
+
+						// can't fail, will always be true
+						json_reply["ack"] = true;
+						json_reply["value_echo"] = (uint8_t)obj["value"];
+						break;
+					}
+
 					default:
 						json_reply["ack"] = 0;
 						break;
@@ -162,12 +178,9 @@ void loop()
 		}
 
 		// reply to message
+		json_reply["to"] = obj.containsKey("id") ? obj["id"] : -1;
 		serializeJson(json_reply, buffer);
 		armsom::write_string(buffer);
-
-		// delay(100);
-
-		// turn fan back off
-		fan::off();
+		Serial.flush();
 	}
 }
