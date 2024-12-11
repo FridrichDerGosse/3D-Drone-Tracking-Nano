@@ -12,8 +12,6 @@
 
 namespace armsom
 {
-    const bool debugging = false;
-
     bool write_string(String data);
 
     bool read_string(String *buffer, unsigned int timeout = 50);

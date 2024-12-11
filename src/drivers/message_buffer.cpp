@@ -1,3 +1,4 @@
+#include "comms/debugging.h"
 #include "message_buffer.hpp"
 
 
@@ -20,7 +21,9 @@ bool MessageBuffer::add_message(char* message)
     // check for buffer overflow
     if (n_elements >= BUFFER_SIZE)
     {
-        Serial.println("buffer overflow");
+        #ifdef DEBUGGING
+        Serial.println(F("buffer overflow"));
+        #endif
         return false;
     }
 

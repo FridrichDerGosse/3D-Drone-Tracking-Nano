@@ -9,10 +9,11 @@
  */
 #pragma once
 #include <Arduino.h>
-#include "RF24.h"
+#include <SPI.h>
+
 #include "RF24Network.h"
 #include "RF24Mesh.h"
-#include <SPI.h>
+#include "RF24.h"
 
 #include "drivers/utils.hpp"
 #include "drivers/message_buffer.hpp"
@@ -28,11 +29,13 @@ namespace mesh
     } payload_t;
     const uint16_t payload_size = sizeof(byte) * STRING_SIZE;
 
+    #ifdef COMMS_DEBUGGING
     /**
      * @brief prints a payload in a readable format
      * 
      */
     void print_payload(payload_t payload);
+    #endif
 
     /**
      * @brief converts a payload to string format
@@ -44,5 +47,5 @@ namespace mesh
      * @brief converts a string to payload format
      * 
      */
-    void string_to_payload(char *string, payload_t *payload);
+    void string_to_payload(const char *string, payload_t *payload);
 }

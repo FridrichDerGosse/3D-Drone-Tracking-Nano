@@ -1,18 +1,41 @@
+#include "debugging.h"
 #include "server.hpp"
 
 
 using namespace mesh;
 
+int mesh::connected_clilents[2][2] = {
+	{1, 0},  // id 1 not connected
+	{2, 0}   // id 2 not connected
+};
+
 
 // mesh master
+void Server::try_set_connected(uint8_t node_id)
+{
+	// if node in list, set it's connection status to true
+	for (int i; i < 2; i++)
+	{
+		if (connected_clilents[i][0] == node_id)
+			connected_clilents[i][1] = 1;
+	}
+}
+
+bool Server::clients_connected()
+{
+	// check if both clients were connected
+	return connected_clilents[0][1] && connected_clilents[1][1];
+}
+
 Server::Server(RF24 *radio, RF24Network *network, RF24Mesh *mesh)
 	: radio(radio), network(network), mesh(mesh)
 {}
 
 void Server::init()
 {
-	if (debugging)
-		Serial.println("initializing");
+	#ifdef COMMS_DEBUGGING
+	Serial.println(F("initializing"));
+	#endif
 
 	// set to master
 	mesh->setNodeID(0);
@@ -21,25 +44,28 @@ void Server::init()
 	radio->begin();
 	radio->setPALevel(RF24_PA_MAX, 0);
 
-	if (debugging)
-		Serial.println("set power level");
+	#ifdef COMMS_DEBUGGING
+	Serial.println(F("set power level"));
+	#endif
 }
 
 bool Server::start()
 {
-	if (debugging)
-		Serial.println("starting");
+	#ifdef COMMS_DEBUGGING
+	Serial.println(F("starting"));
+	#endif
 
 	if (!mesh->begin())
 	{
-		// if mesh.begin() returns false for a master node, then radio.begin() returned false.
-		if (debugging)
-			Serial.println(F("Radio hardware not responding."));
+		#ifdef COMMS_DEBUGGING
+		Serial.println(F("Radio hardware not responding."));
+		#endif
 
 		return false;
 	}
-	if (debugging)
-		Serial.println("server started");
+	#ifdef COMMS_DEBUGGING
+	Serial.println(F("server started"));
+	#endif
 
 	return true;
 }
@@ -54,58 +80,61 @@ void Server::update()
 	mesh->DHCP();
 
 	// Check for incoming data from the sensors
-	if (network->available())
+	while (network->available())
 	{
-		if (debugging)
-			Serial.println("net available");
+		#ifdef COMMS_DEBUGGING
+		Serial.println(F("net available"));
+		#endif
 
 		RF24NetworkHeader header;
 		network->peek(header);
 
-		if (debugging)
-			Serial.println("Got ");
+		#ifdef COMMS_DEBUGGING
+		Serial.println(F("Got "));
+		#endif
 
 		payload_t payload = {0};
 		switch (header.type)
 		{
-		// Display the incoming millis() values from the sensor nodes
-		case 'S':
-			network->read(header, &payload, payload_size);
+			// Display the incoming millis() values from the sensor nodes
+			case 'S':
+				network->read(header, &payload, payload_size);
 
-			if (debugging)
-			{
+				#ifdef COMMS_DEBUGGING
 				Serial.print(header.id);
-				Serial.print(", data: \"");
+				Serial.print(F(", data: \""));
 				mesh::print_payload(payload);
-				Serial.print("\" from RF24Network address 0");
+				Serial.print(F("\" from RF24Network address 0"));
 				Serial.print(header.from_node, OCT);
-				Serial.print(", type: ");
+				Serial.print(F(", type: "));
 				Serial.println((char)header.type);
-			}
+				#endif
 
-			// append to queue
-			// if (!message_written)
-			// {
-			// 	message_written = true;
-			// 	strncpy(last_message, payload.data, 64);
-			// }
-			char buffer[STRING_SIZE];
-			mesh::payload_to_string(&payload, buffer);
-			receive_buffer.add_message(buffer);
+				// set client[node_id] to connected
+				if (!clients_connected())
+					try_set_connected(header.from_node);
+		
+				// append to queue
+				char buffer[STRING_SIZE];
+				mesh::payload_to_string(&payload, buffer);
+				receive_buffer.add_message(buffer);
 
-			break;
+				break;
 
-		default:
-			network->read(header, 0, 0);
+			default:
+				network->read(header, 0, 0);
 
-			if (debugging)
-			{
-				Serial.print("unknown header type: "); Serial.print((char)header.type);
-				Serial.print(" ("); Serial.print((uint8_t)header.type); Serial.println(")");
-			}
+				#ifdef COMMS_DEBUGGING
+				Serial.print(F("unknown header type: ")); Serial.print((char)header.type);
+				Serial.print(F(" (")); Serial.print((uint8_t)header.type); Serial.println(")");
+				#endif
 
-			break;
+				break;
 		}
+
+		// update network again in case of multiple messages
+		mesh->update();
+		mesh->DHCP();
 	}
 }
 
@@ -114,8 +143,9 @@ bool Server::send(payload_t payload, uint8_t target)
 	// RF24NetworkHeader header(mesh->getAddress(target), OCT);
 	if (!mesh->write(&payload, 'S', payload_size, target))
 	{
-		if (debugging)
-			Serial.println("send fail");
+		#ifdef COMMS_DEBUGGING
+		Serial.println(F("send fail"));
+		#endif
 
 		return false;
 	}
@@ -134,8 +164,5 @@ bool Server::get_received_message(char *buffer)
 		return false;
 	
 	// copy buffer content
-	// strncpy(buffer, last_message, 64);
-	receive_buffer.read(buffer);
-
-	return true;
+	return receive_buffer.read(buffer);
 }

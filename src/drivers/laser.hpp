@@ -33,8 +33,6 @@ namespace laser
             // float ascii_to_value(char *message)
 
         public:
-            bool debugging = false;
-
             Laser(uint8_t rx_pin, uint8_t tx_pin, uint32_t baud);
 
             /**

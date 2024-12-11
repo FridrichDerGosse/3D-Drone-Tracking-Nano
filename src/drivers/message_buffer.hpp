@@ -33,5 +33,12 @@ class MessageBuffer
 
         bool add_message(char *message);
 
+        /**
+         * @brief read messsage and delete from buffer (move read pos)
+         * 
+         * @param message write target
+         * @return true read success
+         * @return false read fail
+         */
         bool read(char *message);
 };

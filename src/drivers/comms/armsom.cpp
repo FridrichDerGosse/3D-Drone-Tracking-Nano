@@ -1,20 +1,21 @@
+#include "debugging.h"
 #include "armsom.hpp"
 
 
 
 bool armsom::write_string(String data)
 {
-    // Serial.print("got: \"");
+    // write data and append null terminator to it
     Serial.print(data); Serial.print('\0');
-    // Serial.println("\"");
     return true;
 }
 
 
 bool armsom::read_string(String *buffer, unsigned int timeout)
 {
-    if (debugging)
-        Serial.println("reading data... ");
+    #ifdef ARMSOM_DEBUGGING
+    Serial.println(F("reading data... "));
+    #endif
 
     unsigned int current_timeout = 0;
     while (current_timeout < timeout)
@@ -25,10 +26,9 @@ bool armsom::read_string(String *buffer, unsigned int timeout)
 
             char tmp = (char)Serial.read();
 
-            if (debugging)
-            {
-                Serial.print("read \""); Serial.print(tmp); Serial.println("\"");
-            }
+            #ifdef ARMSOM_DEBUGGING
+            Serial.print(F("read \"")); Serial.print(tmp); Serial.println("\"");
+            #endif
 
             if (tmp == '\0' && buffer->length() > 1)
                 return true;
@@ -38,10 +38,9 @@ bool armsom::read_string(String *buffer, unsigned int timeout)
             continue;
         }
 
-        if (debugging)
-        {
-            Serial.print("nothing available, timeout="); Serial.println(current_timeout);
-        }
+        #ifdef ARMSOM_DEBUGGING
+        Serial.print(F("nothing available, timeout=")); Serial.println(current_timeout);
+        #endif
 
         delay(5);
         current_timeout += 5;

@@ -1,5 +1,7 @@
+#include "debugging.h"
 #include "mesh.hpp"
 
+#ifdef COMMS_DEBUGGING
 void mesh::print_payload(payload_t payload)
 {
     for (int i = 0; i < STRING_SIZE; i++)
@@ -11,9 +13,9 @@ void mesh::print_payload(payload_t payload)
             break;
 
         Serial.print((char)b);
-        // Serial.print(",");
     }
 }
+#endif
 
 void mesh::payload_to_string(payload_t *payload, char *string)
 {
@@ -26,13 +28,10 @@ void mesh::payload_to_string(payload_t *payload, char *string)
         if (b == 0)
             break;
     }
-
-    // Serial.print("payload: "); print_payload(*payload); Serial.println("\n");
-    // Serial.print("converted to: "); Serial.println(string);
 }
 
 
-void mesh::string_to_payload(char *string, payload_t *payload)
+void mesh::string_to_payload(const char *string, payload_t *payload)
 {
     for (uint16_t i = 0; i < payload_size; i++)
     {

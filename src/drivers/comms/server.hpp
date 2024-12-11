@@ -11,9 +11,9 @@
 #include "mesh.hpp"
 
 
-
 namespace mesh
 {
+    extern int connected_clilents[2][2];
     class Server
     {
         private:
@@ -21,13 +21,13 @@ namespace mesh
             RF24Network *network;
             RF24Mesh *mesh;
 
-            // MessageBuffer<16, 1024> send_buffer;
-            // bool message_written = false;
-            // char last_message[64];
             MessageBuffer receive_buffer;
 
+        protected:
+            void try_set_connected(uint8_t node_id);
+
         public:
-            bool debugging = false;
+            bool clients_connected();
 
             Server(RF24 *radio, RF24Network *network, RF24Mesh *mesh);
 

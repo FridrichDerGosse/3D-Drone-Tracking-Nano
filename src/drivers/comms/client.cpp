@@ -1,3 +1,4 @@
+#include "debugging.h"
 #include "client.hpp"
 
 using namespace mesh;
@@ -28,15 +29,17 @@ bool Client::connect(uint8_t retries)
 			do
 			{
 				// mesh->renewAddress() will return MESH_DEFAULT_ADDRESS on failure to connect
-				if (debugging)
-					Serial.println(F("Could not connect to network.\nretrying..."));
-	
+				#ifdef COMMS_DEBUGGING
+				Serial.println(F("Could not connect to network.\nretrying..."));
+				#endif
+
 			} while (mesh->renewAddress() == MESH_DEFAULT_ADDRESS);
 		}
 		else
 		{
-			if (debugging)
-				Serial.println(F("Radio hardware not responding."));
+			#ifdef COMMS_DEBUGGING
+			Serial.println(F("Radio hardware not responding."));
+			#endif
 	
 			return false;
 		}
@@ -54,8 +57,9 @@ void Client::update()
 		RF24NetworkHeader header;
 		network->peek(header);
 
-		if (debugging)
-			Serial.print("Got ");
+		#ifdef COMMS_DEBUGGING
+		Serial.print("Got ");
+		#endif
 
 		payload_t payload;
 		switch (header.type)
@@ -63,20 +67,21 @@ void Client::update()
 		// Display the incoming millis() values from the sensor nodes
 		case 'S':
 			network->read(header, &payload, payload_size);
-			if (debugging)
-			{
-				Serial.print("data: ");
+
+			#ifdef COMMS_DEBUGGING
+				Serial.print(F("data: "));
 				mesh::print_payload(payload);
-				Serial.print(" from RF24Network address 0");
+				Serial.print(F(" from RF24Network address 0"));
 				Serial.println(header.from_node, OCT);
-			}
+			#endif
 			break;
 
 		default:
 			network->read(header, 0, 0);
 		
-			if (debugging)
-				Serial.println(header.type);
+			#ifdef COMMS_DEBUGGING
+			Serial.println(header.type);
+			#endif
 		
 			break;
 		}
@@ -85,10 +90,9 @@ void Client::update()
 
 bool Client::send(payload_t payload, bool renew, uint8_t target)
 {
-	if (debugging)
-	{
-		Serial.print("sending payload: "); mesh::print_payload(payload);
-	}
+	#ifdef COMMS_DEBUGGING
+	Serial.print(F("sending payload: ")); mesh::print_payload(payload);
+	#endif
 
 	// Send an 'M' type message containing the current millis()
 	if (!mesh->write(&payload, 'S', payload_size, target))
@@ -100,8 +104,9 @@ bool Client::send(payload_t payload, bool renew, uint8_t target)
 			if (renew)
 			{
 				// refresh the network address
-				if (debugging)
-					Serial.println("Renewing Address");
+				#ifdef COMMS_DEBUGGING
+				Serial.println(F("Renewing Address"));
+				#endif
 	
 				if (mesh->renewAddress() == MESH_DEFAULT_ADDRESS)
 				{
@@ -112,23 +117,26 @@ bool Client::send(payload_t payload, bool renew, uint8_t target)
 			}
 			else
 			{
-				if (debugging)
-					Serial.println("Send fail, Test fail");
+				#ifdef COMMS_DEBUGGING
+				Serial.println(F("Send fail, Test fail"));
+				#endif
 			}
 			return false;
 		}
 		else
 		{
-			if (debugging)
-				Serial.println("Send fail, Test OK");
+			#ifdef COMMS_DEBUGGING
+			Serial.println(F("Send fail, Test OK"));
+			#endif
 		
 			return false;
 		}
 	}
 	else
 	{
-		if (debugging)
-			Serial.println("Send OK");
+		#ifdef COMMS_DEBUGGING
+		Serial.println(F("Send OK"));
+		#endif
 
 		return true;
 	}

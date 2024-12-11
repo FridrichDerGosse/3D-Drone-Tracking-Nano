@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
+#include "comms/debugging.h"
 #include "laser.hpp"
 
 
@@ -85,8 +86,9 @@ uint8_t Laser::read_sensor(char *buffer, int timeout)
     {
         if (timeout <= 0)
         {
-            if (debugging)
-                Serial.print("failed to read sensor");
+            #ifdef LASER_DEBUGGING
+            Serial.print(F("failed to read sensor"));
+            #endif
 
             return -1;
         }
@@ -95,8 +97,9 @@ uint8_t Laser::read_sensor(char *buffer, int timeout)
         timeout -= 20;
     };
 
-    if (debugging)
-        Serial.println("sensor available");
+    #ifdef LASER_DEBUGGING
+    Serial.println(F("sensor available"));
+    #endif
 
     delay(50);
 
@@ -107,10 +110,9 @@ uint8_t Laser::read_sensor(char *buffer, int timeout)
         buffer[i]=sensor_serial.read();
 
         // detailed message
-        if (debugging)
-        {
-            Serial.print((uint8_t)buffer[i], HEX); Serial.print(" ");
-        }
+        #ifdef LASER_DEBUGGING
+        Serial.print((uint8_t)buffer[i], HEX); Serial.print(" ");
+        #endif
 
         i++;
     }
@@ -139,16 +141,18 @@ bool Laser::set_range(uint8_t range)
     // send command to sensor
     sensor_serial.print(buff);
 
-    if (debugging)
-        Serial.println("message sent");
+    #ifdef LASER_DEBUGGING
+    Serial.println(F("message sent"));
+    #endif
 
     // wait for sensor reply
     char read_buff[16];
     if (!read_sensor(read_buff))
         return false;
 
-    if (debugging)
-        Serial.println(read_buff[1], HEX);
+    #ifdef LASER_DEBUGGING
+    Serial.println(read_buff[1], HEX);
+    #endif
 
     // check for success
     return read_buff[1] == 0x04;
@@ -222,8 +226,9 @@ double Laser::measure()
 
     if(read_buff[3]=='E' && read_buff[4]=='R' && read_buff[5]=='R')
     {
-        if (debugging)
-            Serial.println("Error reading sensor");
+        #ifdef LASER_DEBUGGING
+        Serial.println(F("Error reading sensor"));
+        #endif
 
         return -1;
     }
@@ -239,17 +244,16 @@ double Laser::measure()
        .001 * (read_buff[9] - 0x30)
     );
 
-    if (debugging)
-    {
-        Serial.print("number: ");
-        Serial.print((read_buff[3] - 0x30), DEC);
-        Serial.print((read_buff[4] - 0x30), DEC);
-        Serial.print((read_buff[5] - 0x30), DEC);
-        Serial.print(".");
-        Serial.print((read_buff[7] - 0x30), DEC);
-        Serial.print((read_buff[8] - 0x30), DEC);
-        Serial.println((read_buff[9] - 0x30), DEC);
-    }
+    #ifdef LASER_DEBUGGING
+    Serial.print(F("number: "));
+    Serial.print((read_buff[3] - 0x30), DEC);
+    Serial.print((read_buff[4] - 0x30), DEC);
+    Serial.print((read_buff[5] - 0x30), DEC);
+    Serial.print(".");
+    Serial.print((read_buff[7] - 0x30), DEC);
+    Serial.print((read_buff[8] - 0x30), DEC);
+    Serial.println((read_buff[9] - 0x30), DEC);
+    #endif
 
     // check if 1mm or 0.1mm precision
     if (message_length == 12)
@@ -259,56 +263,3 @@ double Laser::measure()
 
     return out;
 }
-
-
-// SoftwareSerial mySerial(2,3);//Define software serial, 3 is TX, 2 is RX
-// char buff[4]={0x80,0x06,0x03,0x77};
-// unsigned char data[11]={0};
-//
-// void setup()
-// {
-//  Serial.begin(115200);
-//  mySerial.begin(9600);
-// }
-//
-// void loop()
-// {
-//   mySerial.print(buff);
-//   while(1)
-//   {
-//     if(mySerial.available()>0)//Determine whether there is data to read on the serial 
-//     {
-//       delay(50);
-//       for(int i=0;i<11;i++)
-//       {
-//         data[i]=mySerial.read();
-//       }
-//       unsigned char Check=0;
-//       for(int i=0;i<10;i++)
-//       {
-//         Check=Check+data[i];
-//       }
-//       Check=~Check+1;
-//       if(data[10]==Check)
-//       {
-//         if(data[3]=='E'&&data[4]=='R'&&data[5]=='R')
-//         {
-//           Serial.println("Out of range");
-//         }
-//         else
-//         {
-//           float distance=0;
-//           distance=(data[3]-0x30)*100+(data[4]-0x30)*10+(data[5]-0x30)*1+(data[7]-0x30)*0.1+(data[8]-0x30)*0.01+(data[9]-0x30)*0.001;
-//           Serial.print("Distance = ");
-//           Serial.print(distance,3);
-//           Serial.println(" M");
-//         }
-//       }
-//       else
-//       {
-//         Serial.println("Invalid Data!");
-//       }
-//     }
-//     delay(20);
-//   }
-// }
