@@ -22,7 +22,6 @@ void setup()
 	while (!Serial);
 
 	// mesh server
-	server.debugging = false;
 	server.init();
 	server.start();
 }

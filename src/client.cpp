@@ -34,7 +34,6 @@ void setup()
 }
 
 
-char *mes = "{\"type\": 11}";
 uint16_t counter = 0;
 uint32_t displayTimer = 0;
 void loop()
@@ -45,8 +44,8 @@ void loop()
     {
         displayTimer = millis();
         mesh::payload_t initial_message;
-        mesh::string_to_payload(mes, &initial_message);
-        while (!client.send(initial_message, false)) { delay(30); };
+        mesh::string_to_payload("{\"type\": 11}", &initial_message);
+	    Serial.println(client.send(initial_message));
     }
     // {
 

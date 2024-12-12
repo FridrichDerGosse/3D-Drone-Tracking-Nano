@@ -12,8 +12,8 @@
 
 
 // very limited ram
-#define BUFFER_SIZE 4
-#define STRING_SIZE 64
+#define BUFFER_SIZE 3
+#define STRING_SIZE 96
 
 
 // template <uint8_t buffer_size, uint16_t string_size>

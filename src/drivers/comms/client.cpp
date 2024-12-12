@@ -17,7 +17,7 @@ void Client::init()
 
 	// set emmision strengh
 	radio->begin();
-	radio->setPALevel(RF24_PA_MAX, 0);
+	radio->setPALevel(RF24_PA_MIN, 0);
 }
 
 bool Client::connect(uint8_t retries)
@@ -94,7 +94,7 @@ bool Client::send(payload_t payload, bool renew, uint8_t target)
 	Serial.print(F("sending payload: ")); mesh::print_payload(payload);
 	#endif
 
-	// Send an 'M' type message containing the current millis()
+	// 'S' Message: forward to armsom
 	if (!mesh->write(&payload, 'S', payload_size, target))
 	{
 

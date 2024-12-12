@@ -35,7 +35,7 @@ namespace mesh
              * @brief initial setup of the mesh
              * 
              */
-            void init();
+            bool init();
 
             /**
              * @brief tries to start the master node

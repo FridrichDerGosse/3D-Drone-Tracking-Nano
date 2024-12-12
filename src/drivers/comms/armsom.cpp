@@ -17,8 +17,8 @@ bool armsom::read_string(String *buffer, unsigned int timeout)
     Serial.println(F("reading data... "));
     #endif
 
-    unsigned int current_timeout = 0;
-    while (current_timeout < timeout)
+    uint8_t current_timeout = 0;
+    while (current_timeout * 5 < timeout)
     {
         if (Serial.available())
         {
@@ -43,8 +43,52 @@ bool armsom::read_string(String *buffer, unsigned int timeout)
         #endif
 
         delay(5);
-        current_timeout += 5;
+        current_timeout += 1;
     }
 
     return buffer->length() > 0;
 }
+
+
+#ifdef ARMSOM_FORWARD_DEBUGGING
+char armsom::debug_buffer[STRING_SIZE];
+
+void armsom::debug_start()
+{
+    Serial.print(F("{\"ctrl\":4,\"content\":\""));
+}
+void armsom::debug_end()
+{
+    Serial.print("\"}"); Serial.print('\0');
+}
+
+void armsom::debug(const char* message)
+{
+    // convert to string so " is being converted to \"
+    snprintf(
+        debug_buffer,
+        STRING_SIZE,
+        "{\"ctrl\":4,\"content\":\"%s\"}\0",
+        message
+    );
+
+    // encapsulate to json and send
+    Serial.print(debug_buffer);
+}
+
+void armsom::debug(char c)
+{
+    // encapsulate to json and send
+    debug_start();
+    Serial.print(c);
+    debug_end();
+}
+
+void armsom::debug(int number)
+{
+    // encapsulate to json and send
+    debug_start();
+    Serial.print(number);
+    debug_end();
+}
+#endif

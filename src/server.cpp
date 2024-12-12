@@ -13,14 +13,16 @@
 #include "drivers/laser.hpp"
 #include "drivers/comms/armsom.hpp"
 #include "drivers/comms/server.hpp"
+#include "drivers/comms/debugging.h"
 
 
 /**
  * control messages (to server)
  * 	* ctrl=0: comm start (clients are both connected)
- *  * ctrl=1: ping (ping request)
- * 	* ctrl=2: pong (ping reply)
- *  * ctrl=3: RF message forward
+ *  * ctrl=1: ping (ping request) REQUIRES: id
+ * 	* ctrl=2: pong (ping reply) REQUIRES: to
+ *  * ctrl=3: RF message forward REQUIRES: data
+ *  * ctrl=4: debug message (print forward) REQUIRES: content
  * 
  * control messages (from server)
  * 	* ctrl=0: -
@@ -49,11 +51,26 @@ void setup()
 	Serial.flush();
 
 	// mesh server
-	server.init();
-	server.start();
+	if (!server.init() || !server.start())
+	{
+		// forward error to armsom
+		#ifdef ARMSOM_FORWARD_DEBUGGING
+		armsom::debug("nRF Hardware error!");
+		#endif
+
+		// wait for 5 seconds
+		delay(5000);
+
+		// retry setup
+		setup();
+	}
 
 	// read all data sent bevore starting
 	while (Serial.available()) { Serial.read(); }
+
+	#ifdef ARMSOM_FORWARD_DEBUGGING
+	armsom::debug("started");
+	#endif
 }
 // before: 95.9%
 // after json removal: 76.2%
@@ -70,47 +87,30 @@ bool sent_clients_connected = false;
 char net_message_buffer[STRING_SIZE];
 void loop()
 {
-	// reset json document
 	server.update();
 
 	// read client messages (and forward them after start)
 	while (server.available())  // prioritize RF comms over serial
 	{
-		// make sure regulare updates are called
-		server.update();
-
 		// read available message and continue on fail
 		if (!server.get_received_message(net_message_buffer))
 			continue;
 
-		// read available message and continue if not all clients are connected
-		if (!server.clients_connected())
-			continue;
-
-		// insert ctrl=3 into the jsono object
-		buffer = "{\"ctrl\": 3," ;
-		net_message_buffer[0] = ' ';
-		buffer.concat(net_message_buffer);
+		// insert ctrl=3 into the json object
+		buffer = net_message_buffer;
+		snprintf(
+			net_message_buffer,
+			STRING_SIZE,
+			"{\"ctrl\":3,\"data\":%s}",
+			buffer.c_str()
+		);
 
 		// send json object to armsom
-		armsom::write_string(buffer);
+		armsom::write_string(net_message_buffer);
 		Serial.flush();
 
-		// // try to convert to json
-		// error = deserializeJson(json_doc, net_message_buffer);
-
-		// if (error)  // failed to convert
-		// {
-		// 	// ignore message and continue
-		// 	continue;
-		// }
-		// else  // successfully converted to json
-		// {
-		// 	// set message type to RF forward and send
-		// 	json_doc["ctrl"] = 3;
-		// 	serializeJson(json_doc, net_message_buffer);
-		// 	armsom::write_string(net_message_buffer);
-		// }
+		// make sure regulare updates are called
+		server.update();
 	}
 
 	// only start serial comms after both clients were connected (doesn't work otherwise)
@@ -123,6 +123,8 @@ void loop()
 		armsom::write_string(F("{\"ctrl\": 0}"));
 		sent_clients_connected = true;
 	}
+
+	return;
 
 	// handle serial comms
 	if (Serial.available())

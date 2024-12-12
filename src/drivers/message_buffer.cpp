@@ -46,7 +46,7 @@ bool MessageBuffer::read(char* message)
     // check if anything is available
     if (!available())
         return false;
-    
+
     // copy message to output
     strncpy(message, messages[read_pos], STRING_SIZE);
 
