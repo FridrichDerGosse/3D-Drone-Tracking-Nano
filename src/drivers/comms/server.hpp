@@ -13,7 +13,7 @@
 
 namespace mesh
 {
-    extern int connected_clilents[2][2];
+    extern uint8_t connected_clilents[2][2];
     class Server
     {
         private:

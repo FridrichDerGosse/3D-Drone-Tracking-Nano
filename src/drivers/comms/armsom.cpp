@@ -68,12 +68,12 @@ void armsom::debug(const char* message)
     snprintf(
         debug_buffer,
         STRING_SIZE,
-        "{\"ctrl\":4,\"content\":\"%s\"}\0",
+        "{\"ctrl\":4,\"content\":\"%s\"}",
         message
     );
 
     // encapsulate to json and send
-    Serial.print(debug_buffer);
+    Serial.print(debug_buffer); Serial.print('\0');
 }
 
 void armsom::debug(char c)

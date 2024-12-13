@@ -19,7 +19,7 @@ void mesh::print_payload(payload_t payload)
 
 void mesh::payload_to_string(payload_t *payload, char *string)
 {
-    for (int i = 0; i < STRING_SIZE; i++)
+    for (uint8_t i = 0; i < STRING_SIZE; i++)
     {
         byte b = payload->data[i];
         string[i] = (char)b;

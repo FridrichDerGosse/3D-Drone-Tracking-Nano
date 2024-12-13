@@ -5,7 +5,7 @@
 
 using namespace mesh;
 
-int mesh::connected_clilents[2][2] = {
+uint8_t mesh::connected_clilents[2][2] = {
 	{1, 0},  // id 1 not connected
 	{1, 0}   // id 2 not connected
 };

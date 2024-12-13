@@ -301,4 +301,16 @@ Flash: [========  ]  78.5% (used 24124 bytes from 30720 bytes)
 laser opt: (more RAM but takes (close to) no dynamic RAM)
 RAM:   [========  ]  78.4% (used 1605 bytes from 2048 bytes)
 Flash: [========  ]  77.9% (used 23946 bytes from 30720 bytes)
+
+server opt:
+RAM:   [========  ]  78.2% (used 1601 bytes from 2048 bytes)
+Flash: [========  ]  77.8% (used 23912 bytes from 30720 bytes)
+
+Mesh opt:
+RAM:   [========  ]  78.0% (used 1597 bytes from 2048 bytes)
+Flash: [========  ]  77.9% (used 23918 bytes from 30720 bytes)
+
+no armsom debugging:
+RAM:   [=======   ]  72.2% (used 1479 bytes from 2048 bytes)
+Flash: [========  ]  76.5% (used 23502 bytes from 30720 bytes)
  */
