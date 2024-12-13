@@ -12,17 +12,20 @@
 
 
 // very limited ram
-#define BUFFER_SIZE 3
-#define STRING_SIZE 96
+#define BUFFER_SIZE 2
+#define STRING_SIZE 64
 
 
-// template <uint8_t buffer_size, uint16_t string_size>
+#define W_POS 0b00001111
+#define R_POS 0b11110000
+
 class MessageBuffer
 {
     private:
         uint8_t n_elements = 0;
-        uint8_t write_pos;
-        uint8_t read_pos;
+
+        // represent read and write pos as one 8-bit integer (4 bit each)
+        uint8_t rw_pos;  // first 4 write, last 4 read (only saves 1 byte why tf did I do this)
 
         char messages[BUFFER_SIZE][STRING_SIZE];
 

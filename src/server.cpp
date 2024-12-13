@@ -72,17 +72,14 @@ void setup()
 	armsom::debug("started");
 	#endif
 }
-// before: 95.9%
-// after json removal: 76.2%
 
-// before debugging optimization: 68.8% RAM, 78.4% Flash
-// after debugging optimization: 67.4% RAM, 73.8% Flash
-
+// JsonObject obj;
 
 String buffer;
-JsonObject obj;
-JsonDocument json_doc;
+float sensor_val;
+JsonDocument obj;
 DeserializationError error;
+mesh::payload_t net_message_payload;
 bool sent_clients_connected = false;
 char net_message_buffer[STRING_SIZE];
 void loop()
@@ -124,8 +121,6 @@ void loop()
 		sent_clients_connected = true;
 	}
 
-	return;
-
 	// handle serial comms
 	if (Serial.available())
 	{
@@ -142,9 +137,8 @@ void loop()
 		}
 
 		// convert message to json
-		deserializeJson(json_doc, buffer);
-
-		obj = json_doc.as<JsonObject>();
+		deserializeJson(obj, buffer);
+		// obj = json_doc.as<JsonObject>();
 
 		// clear net buffer to be used as reply
 		memset(net_message_buffer, '\0', STRING_SIZE);
@@ -178,14 +172,15 @@ void loop()
 			{
 				case 0: // send
 				{
-					mesh::payload_t initial_message;
-					mesh::string_to_payload(obj["data"], &initial_message);
+					// convert message into payload
+					mesh::string_to_payload(obj["data"], &net_message_payload);
 
+					// send message to net and reply to armsom
 					snprintf(
 						net_message_buffer,
 						STRING_SIZE,
 						"{\"type\": 0, \"ack\": %d, \"to\": %d}",
-						server.send(initial_message, obj["target"]),
+						server.send(net_message_payload, obj["target"]),
 						reply_to
 					);
 					break;
@@ -195,7 +190,7 @@ void loop()
 				{
 					// measure twice bc idk how but he alwys delayed
 					tof.measure();
-					float sensor_val = tof.measure();
+					sensor_val = tof.measure();
 
 					if (sensor_val > 0)
 					{
@@ -285,3 +280,25 @@ void loop()
 		Serial.flush();
 	}
 }
+
+/**
+before main:
+RAM:   [========  ]  76.2% (used 1560 bytes from 2048 bytes)
+Flash: [=====     ]  49.7% (used 15270 bytes from 30720 bytes)
+
+after:
+RAM:   [========= ]  93.5% (used 1914 bytes from 2048 bytes)
+Flash: [========  ]  79.2% (used 24342 bytes from 30720 bytes)
+
+smaller net message buffer:
+RAM:   [========  ]  77.8% (used 1594 bytes from 2048 bytes)
+Flash: [========  ]  78.5% (used 24118 bytes from 30720 bytes)
+
+message_buffer optimizations:
+RAM:   [========  ]  77.8% (used 1593 bytes from 2048 bytes)
+Flash: [========  ]  78.5% (used 24124 bytes from 30720 bytes)
+
+laser opt: (more RAM but takes (close to) no dynamic RAM)
+RAM:   [========  ]  78.4% (used 1605 bytes from 2048 bytes)
+Flash: [========  ]  77.9% (used 23946 bytes from 30720 bytes)
+ */

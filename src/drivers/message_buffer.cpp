@@ -4,8 +4,7 @@
 
 MessageBuffer::MessageBuffer()
 {
-    write_pos = 0;
-    read_pos = 0;
+    rw_pos = 0;
 }
 
 
@@ -28,12 +27,16 @@ bool MessageBuffer::add_message(char* message)
     }
 
     // copy to buffer
-    strncpy(messages[write_pos], message, STRING_SIZE);
-    write_pos++;
+    strncpy(messages[rw_pos & W_POS], message, STRING_SIZE);
+
+    // +1 (first 4 bits)
+    rw_pos = (((rw_pos & W_POS) + 1) & W_POS) | (rw_pos & ~W_POS);
+
     n_elements++;
-    if (write_pos >= BUFFER_SIZE)
+    if ((rw_pos & W_POS) >= BUFFER_SIZE)
     {
-        write_pos = 0;
+        // reset write_pos
+        rw_pos &= ~W_POS;
     }
 
     // Success
@@ -48,13 +51,16 @@ bool MessageBuffer::read(char* message)
         return false;
 
     // copy message to output
-    strncpy(message, messages[read_pos], STRING_SIZE);
+    strncpy(message, messages[(rw_pos & R_POS) >> 4], STRING_SIZE);
 
-    read_pos++;
+    // +1 (last 4 bits)
+    rw_pos = (((rw_pos & R_POS) + (1 << 4)) & R_POS) | (rw_pos & ~R_POS);
+
     n_elements--;
-    if (read_pos >= BUFFER_SIZE)
+    if (((rw_pos | R_POS) >> 4) >= BUFFER_SIZE)
     {
-        read_pos = 0;
+        // reset read_pos
+        rw_pos &= ~R_POS;
     }
 
     return true;

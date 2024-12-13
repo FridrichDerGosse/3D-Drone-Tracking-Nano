@@ -66,6 +66,8 @@
 
 using namespace laser;
 
+char laser::sensor_buff[16] = {0};
+
 uint8_t Laser::calculate_checksum(char *message, uint8_t length)
 {
     // sum of all bytes (and %256 cuz uint8_t)
@@ -129,102 +131,93 @@ Laser::Laser(uint8_t rx_pin, uint8_t tx_pin, uint32_t baud)
 
 bool Laser::set_range(uint8_t range)
 {
-    char buff[5] = {
-        ADDRESS_BROADCAST,
-        CMD_GRP_CNTRL,
-        CMD_SET_RANGE,
-        (char)range,
-        0
-    };
-    buff[4] = calculate_checksum(buff, 4);
+    sensor_buff[0] = ADDRESS_BROADCAST;
+    sensor_buff[1] = CMD_GRP_CNTRL;
+    sensor_buff[2] = CMD_SET_RANGE;
+    sensor_buff[3] = (char)range;
+    sensor_buff[4] = calculate_checksum(sensor_buff, 4);
+    sensor_buff[5] = '\0';
 
     // send command to sensor
-    sensor_serial.print(buff);
+    sensor_serial.print(sensor_buff);
 
     #ifdef LASER_DEBUGGING
     Serial.println(F("message sent"));
     #endif
 
     // wait for sensor reply
-    char read_buff[16];
-    if (!read_sensor(read_buff))
+    if (!read_sensor(sensor_buff))
         return false;
 
     #ifdef LASER_DEBUGGING
-    Serial.println(read_buff[1], HEX);
+    Serial.println(sensor_buff[1], HEX);
     #endif
 
     // check for success
-    return read_buff[1] == 0x04;
+    return sensor_buff[1] == 0x04;
 }
 
 
 bool Laser::set_resolution(bool resolution)
 {
-    char buff[5] = {
-        ADDRESS_BROADCAST,
-        CMD_GRP_CNTRL,
-        CMD_SET_RES,
-        (char)(resolution ? 0x02 : 0x01),
-        (char)(resolution ? 0xF4 : 0xF5)  // don't compute CS for simple stuff
-    };
+    sensor_buff[0] = ADDRESS_BROADCAST;
+    sensor_buff[1] = CMD_GRP_CNTRL;
+    sensor_buff[2] = CMD_SET_RES;
+    sensor_buff[3] = (char)(resolution ? 0x02 : 0x01);
+    sensor_buff[4] = (char)(resolution ? 0xF4 : 0xF5);  // don't compute CS for simple stuff
+    sensor_buff[5] = '\0';
 
     // send command to sensor
-    sensor_serial.print(buff);
+    sensor_serial.print(sensor_buff);
 
     // wait for sensor reply
-    char read_buff[16];
-    if (!read_sensor(read_buff))
+    if (!read_sensor(sensor_buff))
         return false;
 
     // check for success
-    return read_buff[1] == 0x04;
+    return sensor_buff[1] == 0x04;
 }
 
 
 bool Laser::set_laser(bool state)
 {
-    char buff[5] = {
-        DEVICE_ADDRESS,
-        CMD_GRP_READ,
-        CMD_SET_LASER,
-        (char)state,
-        (char)(state ? 0x74 : 0x75)  // don't compute CS for simple stuff
-    };
+    sensor_buff[0] = DEVICE_ADDRESS;
+    sensor_buff[1] = CMD_GRP_READ;
+    sensor_buff[2] = CMD_SET_LASER;
+    sensor_buff[3] = (char)state;
+    sensor_buff[4] = (char)(state ? 0x74 : 0x75);  // don't compute CS for simple stuff
+    sensor_buff[5] = '\0';
+
     // send command to sensor
-    sensor_serial.print(buff);
+    sensor_serial.print(sensor_buff);
 
     // wait for sensor reply
-    char read_buff[16];
-    if (!read_sensor(read_buff))
+    if (!read_sensor(sensor_buff))
         return false;
 
     // check for success
-    return read_buff[3];
+    return sensor_buff[3];
 }
 
 
-double Laser::measure()
+float Laser::measure()
 {
-       char buff[4] = {
-        DEVICE_ADDRESS,
-        CMD_GRP_READ,
-        CMD_READ_SINGLE,
-        0
-    };
-    buff[3] = calculate_checksum(buff, 3);
+    sensor_buff[0] = DEVICE_ADDRESS;
+    sensor_buff[1] = CMD_GRP_READ;
+    sensor_buff[2] = CMD_READ_SINGLE;
+    sensor_buff[3] = calculate_checksum(sensor_buff, 3);
+    sensor_buff[4] = '\0';
 
     // send command to sensor
-    sensor_serial.print(buff);
+    sensor_serial.print(sensor_buff);
 
     // wait for sensor reply
-    char read_buff[16];
-    int message_length = read_sensor(read_buff);
+    int message_length = read_sensor(sensor_buff);
 
     if (message_length <= 0)
         return -1;
 
-    if(read_buff[3]=='E' && read_buff[4]=='R' && read_buff[5]=='R')
+    if(sensor_buff[3]=='E' && sensor_buff[4]=='R' && sensor_buff[5]=='R')
     {
         #ifdef LASER_DEBUGGING
         Serial.println(F("Error reading sensor"));
@@ -234,31 +227,31 @@ double Laser::measure()
     }
 
     // convert from ascii 3x 3x 3x . 3x 3x 3x (3x) to normal
-    double out = (
-        100 * (read_buff[3] - 0x30) +
-         10 * (read_buff[4] - 0x30) +
-          1 * (read_buff[5] - 0x30) +
+    float out = (
+        100 * (sensor_buff[3] - 0x30) +
+         10 * (sensor_buff[4] - 0x30) +
+          1 * (sensor_buff[5] - 0x30) +
         // decimal point
-         .1 * (read_buff[7] - 0x30) +
-        .01 * (read_buff[8] - 0x30) +
-       .001 * (read_buff[9] - 0x30)
+         .1 * (sensor_buff[7] - 0x30) +
+        .01 * (sensor_buff[8] - 0x30) +
+       .001 * (sensor_buff[9] - 0x30)
     );
 
     #ifdef LASER_DEBUGGING
     Serial.print(F("number: "));
-    Serial.print((read_buff[3] - 0x30), DEC);
-    Serial.print((read_buff[4] - 0x30), DEC);
-    Serial.print((read_buff[5] - 0x30), DEC);
+    Serial.print((sensor_buff[3] - 0x30), DEC);
+    Serial.print((sensor_buff[4] - 0x30), DEC);
+    Serial.print((sensor_buff[5] - 0x30), DEC);
     Serial.print(".");
-    Serial.print((read_buff[7] - 0x30), DEC);
-    Serial.print((read_buff[8] - 0x30), DEC);
-    Serial.println((read_buff[9] - 0x30), DEC);
+    Serial.print((sensor_buff[7] - 0x30), DEC);
+    Serial.print((sensor_buff[8] - 0x30), DEC);
+    Serial.println((sensor_buff[9] - 0x30), DEC);
     #endif
 
     // check if 1mm or 0.1mm precision
     if (message_length == 12)
     {
-        out += 0.0001 * (read_buff[10] - 0x30);
+        out += 0.0001 * (sensor_buff[10] - 0x30);
     }
 
     return out;

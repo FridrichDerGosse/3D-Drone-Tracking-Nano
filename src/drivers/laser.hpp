@@ -13,6 +13,8 @@
 
 namespace laser
 {
+    extern char sensor_buff[16];
+
     class Laser
     {
         private:
@@ -67,6 +69,6 @@ namespace laser
              * 
              * @return double distance in m, negative values are fail
              */
-            double measure();
+            float measure();
     };
 }
